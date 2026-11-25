@@ -294,6 +294,7 @@ class MailWarden_Admin {
 			$msgs = array(
 				'sent'     => array( 'success', __( 'Email resent.', 'mailwarden' ) ),
 				'failed'   => array( 'error', __( 'The email could not be sent. See the reason in the Order emails box.', 'mailwarden' ) ),
+				'skipped'  => array( 'warning', __( 'WooCommerce did not send that email for this order, for example because it has no recipient or does not match the order status.', 'mailwarden' ) ),
 				'disabled' => array( 'warning', __( 'That email is turned off in WooCommerce, Settings, Emails. Turn it on to resend it.', 'mailwarden' ) ),
 				'unknown'  => array( 'error', __( 'That email cannot be resent.', 'mailwarden' ) ),
 			);

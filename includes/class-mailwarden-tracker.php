@@ -133,7 +133,7 @@ class MailWarden_Tracker {
 	 *
 	 * @param WC_Order $order    Order.
 	 * @param string   $email_id Email ID.
-	 * @return string sent|failed|disabled|unknown
+	 * @return string sent|failed|skipped|disabled|unknown
 	 */
 	public static function resend( $order, $email_id ) {
 		if ( ! array_key_exists( $email_id, self::resendable() ) ) {
@@ -148,10 +148,16 @@ class MailWarden_Tracker {
 			}
 			self::$resending = true;
 			$before          = count( MailWarden_Store::for_order( $order->get_id() ) );
+			// WooCommerce sends the new order email only once unless a resend is allowed.
+			add_filter( 'woocommerce_new_order_email_allows_resend', '__return_true' );
 			$email->trigger( $order->get_id(), $order );
+			remove_filter( 'woocommerce_new_order_email_allows_resend', '__return_true' );
 			self::$resending = false;
 			$rows            = MailWarden_Store::for_order( $order->get_id() );
-			if ( count( $rows ) > $before && 'sent' === $rows[0]['status'] ) {
+			if ( count( $rows ) <= $before ) {
+				return 'skipped';
+			}
+			if ( 'sent' === $rows[0]['status'] ) {
 				/* translators: %s: email name */
 				$order->add_order_note( sprintf( __( '%s email resent with MailWarden.', 'mailwarden' ), $email->get_title() ) );
 				return 'sent';
