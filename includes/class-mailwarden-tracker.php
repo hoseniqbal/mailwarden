@@ -120,11 +120,20 @@ class MailWarden_Tracker {
 				'resent'      => self::$resending,
 			)
 		);
+		$error            = self::$last_error;
 		self::$last_error = '';
 		if ( $result ) {
 			self::maybe_close_alert();
 		} else {
 			self::maybe_open_alert();
+			/**
+			 * An order email failed.
+			 *
+			 * @param int    $order_id Order ID.
+			 * @param string $email_id WooCommerce email ID.
+			 * @param string $error    Reason, if known.
+			 */
+			do_action( 'mailwarden_email_failed', $order->get_id(), (string) $email_id, $error );
 		}
 	}
 
@@ -193,6 +202,12 @@ class MailWarden_Tracker {
 			),
 			false
 		);
+		/**
+		 * Order emails started failing.
+		 *
+		 * @param int $failed Failed emails in the last hour.
+		 */
+		do_action( 'mailwarden_failing', $failed );
 		// Try to warn by email too. It may fail for the same reason, which is why the admin notice exists.
 		self::$alerting = true;
 		$site           = wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES );
