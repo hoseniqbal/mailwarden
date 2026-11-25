@@ -51,11 +51,15 @@ class MailWarden_Admin {
 	 * @return array
 	 */
 	private static function tabs() {
-		return array(
+		$tabs = array(
 			'overview' => __( 'Overview', 'mailwarden' ),
 			'log'      => __( 'Email log', 'mailwarden' ),
 			'settings' => __( 'Settings', 'mailwarden' ),
 		);
+		if ( ! class_exists( 'MWP_Plugin' ) ) {
+			$tabs['pro'] = __( 'Pro', 'mailwarden' );
+		}
+		return $tabs;
 	}
 
 	/**
@@ -92,7 +96,7 @@ class MailWarden_Admin {
 		add_menu_page( __( 'MailWarden', 'mailwarden' ), __( 'MailWarden', 'mailwarden' ), self::CAP, self::PAGE, array( __CLASS__, 'render' ), $icon, 57 );
 		add_submenu_page( self::PAGE, __( 'Overview', 'mailwarden' ), __( 'Overview', 'mailwarden' ), self::CAP, self::PAGE, array( __CLASS__, 'render' ) );
 		$tabs = self::tabs();
-		foreach ( array( 'log', 'settings' ) as $tab ) {
+		foreach ( array_intersect( array_keys( self::tabs() ), array( 'log', 'settings', 'pro' ) ) as $tab ) {
 			add_submenu_page( self::PAGE, $tabs[ $tab ], $tabs[ $tab ], self::CAP, 'admin.php?page=' . self::PAGE . '&tab=' . $tab );
 		}
 	}
@@ -414,7 +418,7 @@ class MailWarden_Admin {
 				</div>
 				<nav class="mailwarden-tabs" aria-label="<?php esc_attr_e( 'MailWarden sections', 'mailwarden' ); ?>">
 					<?php foreach ( self::tabs() as $key => $label ) : ?>
-						<a href="<?php echo esc_url( self::url( $key ) ); ?>"<?php echo $key === $tab ? ' aria-current="page"' : ''; ?>><?php echo esc_html( $label ); ?></a>
+						<a href="<?php echo esc_url( self::url( $key ) ); ?>"<?php echo 'pro' === $key ? ' class="ow-tab-pro"' : ''; ?><?php echo $key === $tab ? ' aria-current="page"' : ''; ?>><?php echo esc_html( $label ); ?></a>
 					<?php endforeach; ?>
 				</nav>
 			</div>
@@ -424,6 +428,8 @@ class MailWarden_Admin {
 				self::render_settings();
 			} elseif ( 'log' === $tab ) {
 				self::render_log();
+			} elseif ( 'pro' === $tab ) {
+				self::render_pro();
 			} else {
 				self::render_overview();
 			}
@@ -690,6 +696,48 @@ class MailWarden_Admin {
 				<?php submit_button( __( 'Save settings', 'mailwarden' ), 'mailwarden-btn', 'submit', false ); ?>
 			</div>
 		</form>
+		<?php
+	}
+	/**
+	 * Pro page: what the add-on adds. Shows "Coming soon" until a store link is set.
+	 *
+	 * @return void
+	 */
+	private static function render_pro() {
+		$points = array(
+			__( 'Automatic retry of failed order emails, waiting longer each time', 'mailwarden' ),
+			__( 'Resend button for customers on the order received page and in My Account', 'mailwarden' ),
+			__( 'Alerts on Slack, Discord, Telegram or any webhook when emails start failing', 'mailwarden' ),
+			__( 'Works even when your mail server is down', 'mailwarden' ),
+		);
+		/**
+		 * Where to buy MailWarden Pro. Empty shows "Coming soon".
+		 *
+		 * @param string $url URL.
+		 */
+		$buy = (string) apply_filters( 'mailwarden_pro_url', '' );
+		?>
+		<section class="ow-sale">
+			<div class="ow-sale-main">
+				<h2><?php esc_html_e( 'MailWarden Pro', 'mailwarden' ); ?></h2>
+				<p><?php esc_html_e( 'Failed order emails send themselves again, and customers can get their confirmation with one click.', 'mailwarden' ); ?></p>
+				<ul class="ow-points">
+					<?php foreach ( $points as $point ) : ?>
+						<li><?php echo esc_html( $point ); ?></li>
+					<?php endforeach; ?>
+				</ul>
+			</div>
+			<div class="ow-sale-aside">
+				<span class="ow-pro-badge"><?php esc_html_e( 'Pro', 'mailwarden' ); ?></span>
+				<h3 style="margin-top:14px"><?php esc_html_e( 'A separate add-on', 'mailwarden' ); ?></h3>
+				<p><?php esc_html_e( 'Everything you use today stays free, with no limits. Pro adds the features on the left.', 'mailwarden' ); ?></p>
+				<?php if ( '' === $buy ) : ?>
+					<p><strong><?php esc_html_e( 'Coming soon.', 'mailwarden' ); ?></strong></p>
+				<?php else : ?>
+					<a class="button ow-btn-gold" href="<?php echo esc_url( $buy ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'See plans', 'mailwarden' ); ?></a>
+				<?php endif; ?>
+			</div>
+		</section>
 		<?php
 	}
 }
